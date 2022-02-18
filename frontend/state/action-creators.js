@@ -1,19 +1,29 @@
 // ❗ You don't need to add extra action creators to achieve MVP
-import * as actions from './action-types'
-export function moveClockwise() { 
-return {type:actions.MOVE_CLOCKWISE}
+import * as types from './action-types';
+import * as actions from './action-types';
+import axios from 'axios';
+
+// ❗ You don't need to add extra action creators to achieve MVP
+export const moveClockwise = () =>
+ ({ type: types.MOVE_CLOCKWISE })
+
+export const moveCounterClockwise = () =>
+  ({ type: types.MOVE_COUNTERCLOCKWISE })
+
+export function selectAnswer(answerId=null) {
+  return {type: actions.SET_SELECTED_ANSWER, payload:answerId}
+ }
+
+export function setMessage(message='') { 
+  return {type: actions.SET_INFO_MESSAGE, payload:message}
 }
-export function moveCounterClockwise() {
-  return {type:actions.MOVE_COUNTERCLOCKWISE}
+
+export function setQuiz(payload=null) { 
+  return {type: actions.SET_QUIZ_INTO_STATE, payload}
 }
 
-export function selectAnswer() { }
-
-export function setMessage() { }
-
-export function setQuiz() { }
-
-export function inputChange() { }
+export const inputChange = value => 
+  ({ type: types.INPUT_CHANGE, payload: value })
 
 export function resetForm() { }
 
@@ -21,15 +31,31 @@ export function resetForm() { }
 export function fetchQuiz() {
   return function (dispatch) {
     // First, dispatch an action to reset the quiz state (so the "Loading next quiz..." message can display)
+    dispatch(setQuiz())
+    axios.get('http://localhost:9000/api/quiz/next').then( (response) => {
+      //console.log('First question',response.data)
+      dispatch(setQuiz(response.data))
+    })
     // On successful GET:
     // - Dispatch an action to send the obtained quiz to its state
   }
 }
-export function postAnswer() {
+export function postAnswer(data) {
   return function (dispatch) {
     // On successful POST:
+    axios.post('http://localhost:9000/api/quiz/answer', data).then( (response) => {
+      if(response.status == 200){
+        console.log(response.status, response.data)
+        dispatch(selectAnswer())
+        dispatch(setMessage(response.data.message))
+        dispatch(setQuiz())
+        dispatch(fetchQuiz())
+      }
+      
+    })
     // - Dispatch an action to reset the selected answer state
     // - Dispatch an action to set the server message to state
+    
     // - Dispatch the fetching of the next quiz
   }
 }
